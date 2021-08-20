@@ -11,33 +11,44 @@ col1, col2, col3 = st.columns([1, 6, 1])
 
 ### Side menu for data input
 
-button_status=st.sidebar.button('🎰 calcul hyper compliqué 🎰')
+
 
 st.sidebar.markdown('Balance les infos sur ta course en tacos 🌮')
 date = st.sidebar.date_input('Indicate pick up date')
 time = st.sidebar.time_input('Indicate pick up time')
 
 pickupdatetime = datetime.datetime.combine(date,time)
-st.sidebar.markdown(pickupdatetime)
 
-pickuplong = st.sidebar.number_input('Indicate pickup longitude')
-pickuplat = st.sidebar.number_input('Indicate pickup latitude')
-dropofflong = st.sidebar.number_input('Indicate dropoff longitude')
-dropofflat = st.sidebar.number_input('Indicate dropoff latitude')
+pickup_address = st.sidebar.text_input('Indicate pickup address','Times Square')
+dropoff_address = st.sidebar.text_input('Indicate dropoff address', 'JFK airport')
 passcount = st.sidebar.slider('Passenger Count',
                               min_value=1,
                               max_value=8,
                               value=5,
                               step=1)
 
-# center on Liberty Bell
-m = folium.Map(location=[39.949610, -75.150282], zoom_start=16)
+button_status = st.sidebar.button('🎰 calcul hyper compliqué 🎰')
 
-# add marker for Liberty Bell
-tooltip = "Liberty Bell"
-folium.Marker(
-        [39.949610, -75.150282], popup="Liberty Bell", tooltip=tooltip
-    ).add_to(m)
+### Coordinates
+def geocode(address='32 rue Lepic, Paris'):
+    params = {"q": address, 'format': 'json'}
+    places = requests.get(f"https://nominatim.openstreetmap.org/search",
+                          params=params).json()
+    return [places[0]['lat'], places[0]['lon']]
+
+pickuplat, pickuplong = geocode(pickup_address)
+dropofflat, dropofflong = geocode(dropoff_address)
+
+m = folium.Map(location=[pickuplat, pickuplong], zoom_start=12)
+
+# add markers
+tooltip_start = "Take Off 🚀"
+tooltip_end = "Landing 🌕"
+folium.Marker([pickuplat, pickuplong], popup="Take Off 🚀",
+              tooltip=tooltip_start).add_to(m)
+folium.Marker([dropofflat, dropofflong], popup="Landing 🌕",
+              tooltip=tooltip_end,fill_color='#3186cc').add_to(m)
+
 
 # call to render Folium map in Streamlit
 folium_static(m)
@@ -87,12 +98,13 @@ gif2 = 'https://media4.giphy.com/media/3ohze3kG5qO9DcTUbe/giphy.gif?cid=ecf05e47
 
 with col2:
     if button_status:
-        if pred > 10:
+
+        if pred >= 50:
             st.image(gif2)
-            st.write(f'😱🥶😱🥶😱 {pred}$$ C TROP REUCH !!!')
+            st.write(f'😱🥶😱🥶😱 {pred}$$ C TROP REUCH !!! 😱🥶😱🥶😱')
 
 
-        if pred < 10:
+        if pred < 50:
             st.balloons()
             st.image(gif1)
             st.write(f'💰💸💰💸💰💸💰 CA VA TE COUTER {pred}$$ 🤑💵🤑💵🤑💵🤑 !!!!')
